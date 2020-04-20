@@ -1,6 +1,14 @@
-/*Decorations are functions
+/*Decorators are functions
 
-they apply to classes, functions, methods, accessors (get, set), parameters
+Decorators apply to classes, functions, methods, accessors (get, set), parameters
+
+Order of operations - 
+Decorator execution precedes a class constructor/instance
+
+Decorators Factories -
+Can customise decorators by giving them state through closures. Their scoped variables are accessible
+
+
 
 Decorators Arguments
 
@@ -18,7 +26,19 @@ function Logger(logString: string) {
   };
 }
 
-@Logger('LOGGING - PERSON')
+function WithTemplate(template: string, hookId: string) {
+  //'_' parameter signifies that argument is passed in but not utilised
+  return function (_: Function) {
+    let hookEl = document.getElementById(hookId);
+
+    if (hookEl) {
+      hookEl.innerHTML = template;
+    }
+  };
+}
+
+// @Logger('LOGGING - PERSON')
+@WithTemplate('<h1>My Person Object</h1>', 'app')
 class Person {
   name = 'Dion';
   constructor() {
