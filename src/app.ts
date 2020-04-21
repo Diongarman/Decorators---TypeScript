@@ -28,6 +28,19 @@ name
 descriptor - a TS type named PropertyDescriptor
 
 
+For methods we get:
+target (prototype if instance accessor, constructor if static accessor)
+name
+descriptor - a TS type named PropertyDescriptor --> Object is slightly different from accessor 
+
+
+For parameters we get:
+
+target
+name - the name of the method of the parameter being decorated
+position - The position number of the parameter
+
+
 Execution of Decorators
 decorator executes when JS registers your class declaration
 
@@ -36,6 +49,25 @@ decorator executes when JS registers your class declaration
 
 Decorators Arguments
 
+
+When Do Decorators Execute?
+
+On class definition as opposed to run time. The idea behind decorators as meta-programming tool.
+
+
+Returning (and changing) A Class In Class Decorators
+
+- Decorator Factory (DF) is given constructor (C-1) from class it is called upon
+- C-1 is passed to Decorator
+- Decorator 'changes' C-1 with a type generic function
+    -takes C-1
+    -extends it with an annoymous class by adding bespoke logic
+    -returns a class that extends C-1
+
+The type generic used in Decorator is:
+<T extends { new (..._: any[]): { name: string } }>
+
+This is the criteria for any object that is desired to be passed as an argument to the decorator
 
 */
 
@@ -52,15 +84,21 @@ function Logger(logString: string) {
 
 function WithTemplate(template: string, hookId: string) {
   console.log('WITHTEMPLATE FACTORY');
-  return function (constructor: any) {
-    console.log('WithTemplate Decorator');
-    let hookEl = document.getElementById(hookId);
-    let p = new constructor();
+  return function <T extends { new (..._: any[]): { name: string } }>(
+    originalConstructor: T
+  ) {
+    return class extends originalConstructor {
+      constructor(..._: any[]) {
+        super();
+        console.log('WithTemplate Decorator');
+        let hookEl = document.getElementById(hookId);
 
-    if (hookEl) {
-      hookEl.innerHTML = template;
-      hookEl.querySelector('h1')!.textContent = p.name;
-    }
+        if (hookEl) {
+          hookEl.innerHTML = template;
+          hookEl.querySelector('h1')!.textContent = this.name;
+        }
+      }
+    };
   };
 }
 
@@ -88,6 +126,24 @@ function Log2(target: any, name: string, descriptor: PropertyDescriptor) {
   console.log(descriptor);
 }
 
+function Log3(
+  target: any,
+  name: string | symbol,
+  descriptor: PropertyDescriptor
+) {
+  console.log('Method Decorator');
+  console.log(target);
+  console.log(name);
+  console.log(descriptor);
+}
+
+function Log4(target: any, name: string | Symbol, position: number) {
+  console.log('Parameter Decorator');
+  console.log(target);
+  console.log(name);
+  console.log(position);
+}
+
 class Product {
   @Log
   title: string;
@@ -104,7 +160,8 @@ class Product {
       throw new Error('Invalid price');
     }
   }
-  getPriceWithTax(tax: number) {
+  @Log3
+  getPriceWithTax(@Log4 tax: number) {
     return this._price * (1 + tax);
   }
 }
