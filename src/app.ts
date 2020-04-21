@@ -22,7 +22,16 @@ For properties we get:
 instance property: target (refers to prototype of object), propertyName
 static property: target (refers to constructor), propertyName
 
+For accessors we get:
+target (prototype if instance accessor, constructor if static accessor)
+name
+descriptor - a TS type named PropertyDescriptor
+
+
+Execution of Decorators
 decorator executes when JS registers your class declaration
+
+
 
 
 Decorators Arguments
@@ -72,6 +81,13 @@ function Log(target: any, propertyName: string | Symbol) {
   console.log(target, propertyName);
 }
 
+function Log2(target: any, name: string, descriptor: PropertyDescriptor) {
+  console.log('Accessor Decorator');
+  console.log(target);
+  console.log(name);
+  console.log(descriptor);
+}
+
 class Product {
   @Log
   title: string;
@@ -80,7 +96,7 @@ class Product {
     this.title = t;
     this._price = p;
   }
-
+  @Log2
   set price(val: number) {
     if (val > 0) {
       this._price = val;
