@@ -82,11 +82,13 @@ function Logger(logString: string) {
   };
 }
 
+type DecoratorCriteria = {
+  new (..._: any[]): { name: string };
+};
+
 function WithTemplate(template: string, hookId: string) {
   console.log('WITHTEMPLATE FACTORY');
-  return function <T extends { new (..._: any[]): { name: string } }>(
-    originalConstructor: T
-  ) {
+  return function <T extends DecoratorCriteria>(originalConstructor: T) {
     return class extends originalConstructor {
       constructor(..._: any[]) {
         super();
