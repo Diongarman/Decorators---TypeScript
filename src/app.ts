@@ -9,7 +9,21 @@ Decorators Factories -
 Can customise decorators by giving them state through closures. Their scoped variables are accessible
 
 Bottom up Order of Ops - 
-Sequences of decorators are executed in a 'bottom up' fashion (Kind of, see execution pattern below)
+Sequences of decorators are executed in a 'bottom up' fashion.
+However, the factories execute in procedurally, i.e. line by line.
+
+
+
+Property Decorators
+
+What arguments a decorator gets depends onst where we use it. 
+
+For properties we get: 
+instance property: target (refers to prototype of object), propertyName
+static property: target (refers to constructor), propertyName
+
+decorator executes when JS registers your class declaration
+
 
 Decorators Arguments
 
@@ -17,21 +31,20 @@ Decorators Arguments
 */
 
 function Logger(logString: string) {
-  console.log("From Factory 'Logger':");
+  console.log('LOGGER FACTORY');
   console.log(logString);
   return function (constructor: Function) {
     console.log(
-      "Decorator from 'Logger':\n\nLogging what I got from factory..\n\n" +
-        logString
+      'Logger Decorator:\n\nLogging what I got from factory..\n\n' + logString
     );
-    console.log("Decorator from 'Logger': \n\n", constructor);
+    console.log(constructor);
   };
 }
 
 function WithTemplate(template: string, hookId: string) {
-  console.log("From Factory 'WithTemplate':");
+  console.log('WITHTEMPLATE FACTORY');
   return function (constructor: any) {
-    console.log("Decorator from 'WithTemplate'");
+    console.log('WithTemplate Decorator');
     let hookEl = document.getElementById(hookId);
     let p = new constructor();
 
@@ -47,9 +60,35 @@ function WithTemplate(template: string, hookId: string) {
 class Person {
   name = 'Dion';
   constructor() {
-    console.log('From Class Instance!');
+    console.log('Class Instance!');
   }
 }
 
 const pers = new Person();
 console.log(pers);
+
+function Log(target: any, propertyName: string | Symbol) {
+  console.log('Property decorator');
+  console.log(target, propertyName);
+}
+
+class Product {
+  @Log
+  title: string;
+  private _price: number;
+  constructor(public t: string, p: number) {
+    this.title = t;
+    this._price = p;
+  }
+
+  set price(val: number) {
+    if (val > 0) {
+      this._price = val;
+    } else {
+      throw new Error('Invalid price');
+    }
+  }
+  getPriceWithTax(tax: number) {
+    return this._price * (1 + tax);
+  }
+}
