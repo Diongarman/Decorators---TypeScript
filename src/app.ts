@@ -57,9 +57,11 @@ On class definition as opposed to run time. The idea behind decorators as meta-p
 
 Returning (and changing) A Class In Class Decorators
 
+What? This pattern works by returning something from a decorator that replaces the thing you added the decorator to, in this case the class. The replacer implements the old + new bespoke logic.
+
 - Decorator Factory (DF) is given constructor (C-1) from class it is called upon
 - C-1 is passed to Decorator
-- Decorator 'changes' C-1 with a type generic function
+- Decorator 'changes' C-1 with a type generic function that returns an extended class
     -takes C-1
     -extends it with an annoymous class by adding bespoke logic
     -returns a class that extends C-1
@@ -69,6 +71,8 @@ The type generic used in Decorator is:
 
 This is the criteria for any object that is desired to be passed as an argument to the decorator
 
+This pattern allows execution on definition vs instantiation:
+Programmer is able to run logic when the class is instantiated, in contrast to before when the decorator logic ran when the class was defined/
 */
 
 function Logger(logString: string) {
@@ -90,6 +94,7 @@ function WithTemplate(template: string, hookId: string) {
   console.log('WITHTEMPLATE FACTORY');
   return function <T extends DecoratorCriteria>(originalConstructor: T) {
     return class extends originalConstructor {
+      //'_' syntax tells TS we won't use this arg
       constructor(..._: any[]) {
         super();
         console.log('WithTemplate Decorator');
@@ -113,8 +118,8 @@ class Person {
   }
 }
 
-const pers = new Person();
-console.log(pers);
+// const pers = new Person();
+// console.log(pers);
 
 function Log(target: any, propertyName: string | Symbol) {
   console.log('Property decorator');
@@ -147,6 +152,7 @@ function Log4(target: any, name: string | Symbol, position: number) {
 }
 
 class Product {
+  //Property decorator
   @Log
   title: string;
   private _price: number;
@@ -154,6 +160,7 @@ class Product {
     this.title = t;
     this._price = p;
   }
+  //Accessor decorator
   @Log2
   set price(val: number) {
     if (val > 0) {
@@ -162,7 +169,9 @@ class Product {
       throw new Error('Invalid price');
     }
   }
+  //Method decorator
   @Log3
+  //Parameter decorator
   getPriceWithTax(@Log4 tax: number) {
     return this._price * (1 + tax);
   }
