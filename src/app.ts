@@ -73,6 +73,13 @@ This is the criteria for any object that is desired to be passed as an argument 
 
 This pattern allows execution on definition vs instantiation:
 Programmer is able to run logic when the class is instantiated, in contrast to before when the decorator logic ran when the class was defined/
+
+
+
+Other Decorator Return Types
+
+Can return PropertyDescriptors on method decorators, this allows us to change the method and/or it's config. (Meta-programming)
+
 */
 
 function Logger(logString: string) {
@@ -176,3 +183,35 @@ class Product {
     return this._price * (1 + tax);
   }
 }
+function Autobind(
+  _target: any,
+  _name: string,
+  propertyDescriptor: PropertyDescriptor
+) {
+  const originalMethod = propertyDescriptor.value;
+  const mutatedDescriptor: PropertyDescriptor = {
+    configurable: true,
+    enumerable: false,
+    get() {
+      //this refers to the concrete object that calls it
+      const boundFn = originalMethod.bind(this);
+      return boundFn;
+    },
+  };
+
+  return mutatedDescriptor;
+}
+
+class Printer {
+  message = 'This works';
+
+  //@Autobind
+  showMessage() {
+    console.log(this.message);
+  }
+}
+let p = new Printer();
+
+let button = document.querySelector('button')!;
+
+button.addEventListener('click', p.showMessage);
