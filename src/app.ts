@@ -205,7 +205,7 @@ function Autobind(
 class Printer {
   message = 'This works';
 
-  //@Autobind
+  @Autobind
   showMessage() {
     console.log(this.message);
   }
@@ -213,5 +213,98 @@ class Printer {
 let p = new Printer();
 
 let button = document.querySelector('button')!;
-
 button.addEventListener('click', p.showMessage);
+
+interface ValidConfig {
+  [property: string]: {
+    [validatableProp: string]: string[]; //['required'], ['positive']
+  };
+}
+
+const registeredValidators: ValidConfig = {};
+
+function validationRegisterHelper(
+  target: any,
+  propName: string,
+  validationToAdd: string
+) {
+  const constructorName = target.constructor.name;
+  const propList = registeredValidators[constructorName];
+
+  let validators;
+  if (!propList || !propList[propName]) {
+    validators = [validationToAdd];
+  } else {
+    validators = [...propList[propName], validationToAdd];
+  }
+
+  registeredValidators[constructorName] = {
+    ...propList,
+    [propName]: validators,
+  };
+  console.log(registeredValidators[constructorName]);
+}
+
+function Require(target: any, propName: string) {
+  validationRegisterHelper(target, propName, 'required');
+}
+
+function PositiveNumber(target: any, propName: string) {
+  validationRegisterHelper(target, propName, 'positive');
+}
+
+//
+
+function Validate(obj: any) {
+  const objValidatorConfig = registeredValidators[obj.constructor.name];
+
+  console.log(registeredValidators);
+
+  let isvalid = true;
+  for (const prop in objValidatorConfig) {
+    for (const validator of objValidatorConfig[prop]) {
+      switch (validator) {
+        case 'required':
+          isvalid = isvalid && !!obj[prop];
+          break;
+        case 'positive':
+          isvalid = isvalid && obj[prop] > 0;
+          break;
+      }
+    }
+  }
+
+  return isvalid;
+}
+
+class Course {
+  @Require
+  title: string;
+  @PositiveNumber
+  price: number;
+
+  constructor(t: string, p: number) {
+    this.title = t;
+    this.price = p;
+  }
+}
+
+const courseForm = document.querySelector('form')!;
+
+courseForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const titleEl = document.getElementById('title') as HTMLInputElement;
+  const priceEl = document.getElementById('price') as HTMLInputElement;
+
+  const title = titleEl.value;
+  const price = +priceEl.value;
+
+  const createdCourse = new Course(title, price);
+
+  if (!Validate(createdCourse)) {
+    alert('Invalid input');
+    return;
+  }
+
+  console.log(createdCourse);
+});
